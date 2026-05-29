@@ -7,4 +7,4 @@
 url = "bolt://127.0.0.1:7687"
 user = "neo4j"
 password = "uvgflixproyecto"
-databajeNeo4j = "neo4j"
+databaseNeo4j = "neo4j"

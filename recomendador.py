@@ -105,19 +105,18 @@ def candidatosContenido(userId, candidatos):
     query = """
         MATCH (u:Usuario {userId: $userId})-[r:VIO]->(visto:Contenido)
         WHERE r.calificacion >= 4
-        MATCH (visto)-[:ES_DE_GENERO|ACTUADA_POR|DIRIGIDA_POR]->(attr)
-              <-[:ES_DE_GENERO|ACTUADA_POR|DIRIGIDA_POR]-(similar:Contenido)
+        MATCH (visto)-[:ES_DE_GENERO]->(g:Genero)<-[:ES_DE_GENERO]-(similar:Contenido)
         WHERE similar <> visto
-          AND NOT EXISTS {
-              MATCH (u)-[:VIO]->(similar)
-          }
+        AND NOT EXISTS {
+            MATCH (u)-[:VIO]->(similar)
+        }
         WITH similar,
-             collect(DISTINCT visto.titulo)[0..3] AS bases,
-             count(DISTINCT attr)                 AS conexiones
+            collect(DISTINCT visto.titulo)[0..3] AS bases,
+            count(DISTINCT g)                    AS conexiones
         RETURN similar.movieId AS movieId,
-               similar.titulo  AS titulo,
-               bases,
-               conexiones
+            similar.titulo  AS titulo,
+            bases,
+            conexiones
         ORDER BY conexiones DESC
         LIMIT $limite
     """
@@ -152,19 +151,16 @@ def filtrarContexto(userId, candidatos, tiempoDisponible=None, estadoAnimo=None)
         MATCH (u:Usuario {userId: $userId})
         OPTIONAL MATCH (u)-[:USA]->(userP:Plataforma)
         WITH u, collect(DISTINCT userP.nombre) AS userPlats
-        MATCH (c:Contenido) WHERE c.movieId IN $ids
 
-        // Filtro de tiempo
-        WHERE ($tiempo IS NULL OR c.duracion IS NULL OR c.duracion <= $tiempo)
+        MATCH (c:Contenido)
+        WHERE c.movieId IN $ids
+        AND ($tiempo IS NULL OR c.duracion IS NULL OR c.duracion <= $tiempo)
 
-        // Filtro de plataforma
-        WITH c, userPlats
         OPTIONAL MATCH (c)-[:DISPONIBLE_EN]->(contP:Plataforma)
         WITH c, userPlats, collect(DISTINCT contP.nombre) AS contPlats
         WHERE size(userPlats) = 0
-           OR any(p IN contPlats WHERE p IN userPlats)
+        OR any(p IN contPlats WHERE p IN userPlats)
 
-        // Filtro de estado de ánimo
         WITH c, $animo AS animo
         WHERE animo IS NULL OR EXISTS {
             MATCH (c)-[:ES_DE_GENERO]->(:Genero)-[:COMPATIBLE_CON]->(:EstadoAnimo {nombre: animo})

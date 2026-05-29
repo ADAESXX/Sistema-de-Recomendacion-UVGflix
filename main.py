@@ -80,15 +80,15 @@ def accion_recomendar():
     recs = rec.recomendar(
         userId,
         n=n,
-        tiempo_disponible=tiempo,
-        estado_animo=animo
+        tiempoDisponible=tiempo,
+        estadoAnimo=animo
     )
 
     imprimirRecomendaciones(recs, "Recomendaciones híbridas")
 
     print()
 
-    recs_amigos = rec.recomendar_por_amigos(userId, n=n)
+    recs_amigos = rec.recomendarAmigos(userId, n=n)
 
     imprimirRecomendaciones(
         recs_amigos,
@@ -278,3 +278,52 @@ def accion_estadisticas():
 
     for k, v in og.estadisticas().items():
         print(f"  {k:<20}: {v}")
+        
+#Menú principal
+acciones=[
+    ("Obtener recomendaciones",     accion_recomendar),
+    ("Listar usuarios",             accion_listar_usuarios),
+    ("Ver historial de un usuario", accion_historial),
+    ("Agregar usuario",             accion_agregar_usuario),
+    ("Eliminar usuario",            accion_eliminar_usuario),
+    ("Calificar contenido",         accion_calificar),
+    ("Buscar contenido",            accion_buscar),
+    ("Agregar amistad",             accion_amistad),
+    ("Vincular plataforma a usuario", accion_plataforma),
+    ("Estadísticas de la BD",       accion_estadisticas),
+]
+
+def menu():
+    if not comprobarConexion():
+        print("No se pudo conectar a Neo4j. Revise config.py y que la BD esté arriba.")
+        return
+
+    try:
+        while True:
+            print("\n" + "=" * 50)
+            print("  UVGflix - Sistema de Recomendaciones")
+            print("=" * 50)
+            for i, (nombre, _) in enumerate(acciones, 1):
+                print(f"  {i:>2}. {nombre}")
+            print("   0. Salir")
+
+            raw = input("\n  Opción: ").strip()
+            if raw == "0":
+                break
+            try:
+                idx = int(raw)
+                if 1 <= idx <= len(acciones):
+                    acciones[idx - 1][1]()
+                else:
+                    print("  Opción inválida.")
+            except ValueError:
+                print("  Ingrese un número.")
+            except Exception as e:
+                print(f"  Error: {e}")
+    finally:
+        closeDriver()
+        print("\n¡Hasta luego!")
+
+
+if __name__ == "__main__":
+    menu()

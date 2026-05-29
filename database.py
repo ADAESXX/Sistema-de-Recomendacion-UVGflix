@@ -6,6 +6,8 @@
 #Fecha: 27/05/2026
 
 #Descripcion: Permite la conexión y acceso a Neo4j
+import logging
+logging.getLogger("neo4j.notifications").setLevel(logging.ERROR)
 
 from contextlib import contextmanager
 from neo4j import GraphDatabase
